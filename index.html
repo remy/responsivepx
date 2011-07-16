@@ -9,16 +9,43 @@
   input { font-size: 16px; padding: 2px; font-family: sans-serif; }
   input[type=range] {  width: 100px; height: 7px; }
   iframe.viewport { position: width: 100%; margin: 34px auto 0 auto; display: block; height: 2000px; -webkit-box-shadow: 0 5px 80px #505050; }
-  form { background: #333 -webkit-gradient(linear, 0% 0%, 0% 100%, from(#666666), to(#666666), color-stop(.6,#333)); color: #fff; width: 100%; padding: 2px; position: fixed; top: 0; left: 0;  }
+  form { height: 30px; overflow: hidden; display: block; background: #333 -webkit-gradient(linear, 0% 0%, 0% 100%, from(#666666), to(#666666), color-stop(.6,#333)); color: #fff; width: 100%; padding: 2px; position: fixed; top: 0; left: 0;  }
+  form {
+    text-shadow: 0 -1px 1px #000;
+  }
+  
+  #info {
+    width: 50%;
+    margin: 15% auto 0;
+    -webkit-box-shadow: 0 5px 80px #505050;
+    background: #fff;
+    padding: 40px;
+    line-height: 1.4em;
+  }
+  
+  #info h1 {
+    margin-top: 0;
+  }
+
+  #info p:last-child {
+    margin-bottom: 0;
+  }
 </style> 
 </head> 
 <body> 
   <form> 
-    <input placeholder=http:// value=http:// type=url id=url name=url autocomplete autofocus> <input type=submit value=Open> 
+    <input placeholder=http:// value=http:// id=url name=url autocomplete autofocus> <input type=submit value=Open> 
     <span title="Because I can't determine programatically whether the scrollbars are visible, you need to check this box yourself to adjust the pixel value to give the real viewport width - rather than the window width">Scrollbar visible? <input type=checkbox id=scrollbars checked></span>
     Width: <input type=range id=width step=1 min=10 max=3000 value=640><input size=4 type=number step=1 class=width>
     Height: <input type=range step=1 id='height' step=10 min=100 max=3000 value=640><input size=4 type=number step=1 class=height>
   </form> 
+  <div id="info">
+    <h1>About responsivepx</h1>
+    <p>Enter the url to your site - local or online: both work - and use the controls to adjust the width and height of your viewport to find exact breakpoint widths in pixels. Then use that information in your media queries to create a <a href="http://www.alistapart.com/articles/responsive-web-design/">responsive design</a>.</p>
+    <p>If your site appears with scrollbars, make sure to check the scrollbar visible box to get the right viewport width and height.</p>
+    <p>Fork the project or log an issue on <a href="http://github.com/remy/responsivepx">github</a></p>
+    <p>Built by <a href="http://twitter.com/rem">@rem</a></p>
+  </div>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script> 
 <script>
 // workout what the dimensions of a scrollbar is for the particular browser. 
@@ -62,7 +89,13 @@ var win = $('iframe'),
 
 $('form').submit(function (e) {
   e.preventDefault();
-  newframe($url.val(), $hide.is(':checked') ? false : true);
+  $('#info').remove();
+  
+  var url = $url.val();
+  
+  if (url.indexOf('http') !== 0) url = 'http://' + url;
+  
+  newframe(url, $hide.is(':checked') ? false : true);
   $range.trigger('change'); // I realise this triggers the size function twice - I'm just lazy :)
 });
 
