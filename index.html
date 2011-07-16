@@ -1,0 +1,95 @@
+<!DOCTYPE html> 
+<html> 
+<head> 
+<meta charset=utf-8 /> 
+<title>Breakpoint</title> 
+<style> 
+  body { font-family: sans-serif; background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAnCAYAAACMo1E1AAAAcUlEQVRYCe3TsQ0AIQzFUGCD7L9jMgIwAJUVOlMiGZ2e/s3M3KPxRETba6vtpQ8P+XEUVTnlqADt3JxyVIB2bk45KkA7N6ccFaDd3PfQ+NVV1esa3flDILYbKaccFaCdm1OOCtDOzSlHBWjn5pSjArQ7Dl0LEgUi4pIAAAAASUVORK5CYII=); margin: 0; padding: 0; }
+  input { font-size: 16px; padding: 2px; font-family: sans-serif; }
+  input[type=range] {  width: 100px; height: 7px; }
+  iframe.viewport { position: width: 100%; margin: 34px auto 0 auto; display: block; height: 2000px; -webkit-box-shadow: 0 5px 80px #505050; }
+  form { background: #333 -webkit-gradient(linear, 0% 0%, 0% 100%, from(#666666), to(#666666), color-stop(.6,#333)); color: #fff; width: 100%; padding: 2px; position: fixed; top: 0; left: 0;  }
+</style> 
+</head> 
+<body> 
+  <form> 
+    <input placeholder=http:// value=http:// type=url id=url name=url autocomplete autofocus> <input type=submit value=Open> 
+    <span title="Because I can't determine programatically whether the scrollbars are visible, you need to check this box yourself to adjust the pixel value to give the real viewport width - rather than the window width">Scrollbar visible? <input type=checkbox id=scrollbars checked></span>
+    Width: <input type=range id=width step=1 min=10 max=3000 value=640><input size=4 type=number step=1 class=width>
+    Height: <input type=range step=1 id='height' step=10 min=100 max=3000 value=640><input size=4 type=number step=1 class=height>
+  </form> 
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script> 
+<script>
+// workout what the dimensions of a scrollbar is for the particular browser. 
+// It's usually 15px, but who sersiously trusts browsers nowadays?!
+function calcScrollbarWidth() {
+  var el = $('<div style="overflow: scroll;">').appendTo('body')[0];
+  var offset = el.offsetHeight;
+  el.parentNode.removeChild(el);
+  return offset;
+}
+
+function newframe(url, scroll) {
+  $('iframe').remove();
+  $('<iframe frameborder=0 class="viewport" src="' + url + '"></iframe>').css('display', 'none').appendTo('body').one('load', function () {
+    // this is just to prevent the initial iframe from appearing empty (as it has a shadow)
+    $(this).css('display', 'block');
+  });
+}
+
+function size(w, h) {
+  // ensure the values are numbers
+  w *= 1;
+  h *= 1;
+  
+  // adjust for whether we have the scrollbars visible
+  if (useoffset) {
+    w += offset;
+    h += offset;
+  }
+  $('iframe').width(w).height(h);
+}
+
+var win = $('iframe'),
+    $w = $('#width'),
+    $h = $('#height'),
+    offset = calcScrollbarWidth(),
+    useoffset = $('#scrollbars').is(':checked'),
+    $url = $('#url'),
+    $hide = $('#hide'),
+    $range = $('input[type=range]');
+
+$('form').submit(function (e) {
+  e.preventDefault();
+  newframe($url.val(), $hide.is(':checked') ? false : true);
+  $range.trigger('change'); // I realise this triggers the size function twice - I'm just lazy :)
+});
+
+$('#scrollbars').click(function () {
+  useoffset = this.checked;
+  var w = $('iframe').width() - (useoffset ? offset : 0),
+      h = $('iframe').height() - (useoffset ? offset : 0);
+  
+  $('input[type=number], input[type=range]').each(function () {
+    if (this.id == 'width' || this.className == 'width') {
+      this.value = w;
+    } else {
+      this.value = h;
+    }
+  });
+});
+
+$('input[type=number]').bind('input', function () {
+  $('#' + this.className).val(this.value);
+  size($w.val(), $h.val());
+});
+
+$range.bind('change', function () {
+  $('.' + this.id).val(this.value);
+  size($w.val(), $h.val());
+}).bind('click', function () {
+  $(this).focus();
+});
+</script> 
+</body> 
+</html>
