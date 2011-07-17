@@ -248,6 +248,12 @@ $('#scrollbars').click(function () {
 $('input[type=number]').bind('input', function (e, nohistory) {
   $('#' + this.className).val(this.value);
   size($w.val(), $h.val(), nohistory);
+}).bind('keydown', function (e) {
+  if (e.shiftKey) {
+    this.step = 10;
+  } else { // I could test here, but the cost of the DOM action would outweigh the cost of the optimisation
+    this.step = 1;
+  }
 });
 
 $range.bind('change', function (e, nohistory) {
