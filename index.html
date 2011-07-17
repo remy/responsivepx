@@ -51,7 +51,7 @@
       </select>
     
     <!-- <input type=range id=width step=1 min=10 max=3000 value=640> -->
-    <input size=4 type=number step=1 class=width>
+    <input size=4 type=number min=10 step=1 class=width>
     Height: 
     <select id=height step=1 type=range>
       <option>10</option>
@@ -66,7 +66,7 @@
       <option>3000</option>
       </select>
     <!-- <input type=range step=1 id='height' step=10 min=100 max=3000 value=640> -->
-    <input size=4 type=number step=1 class=height>
+    <input size=4 type=number min=10 step=1 class=height>
   </form> 
   <div id="info">
     <h1>About responsivepx</h1>
@@ -283,16 +283,13 @@ if (history.pushState) {
   };
 }
 
-
-var _gaq = _gaq || [];
-_gaq.push(['_setAccount', 'UA-1656750-27']);
-_gaq.push(['_trackPageview']);
-
-(function() {
-  var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
-  ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
-  var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
-})();
+var _gaq = [['_setAccount', 'UA-1656750-27'], ['_trackPageview']];
+(function(d, t) {
+  var g = d.createElement(t),
+      s = d.getElementsByTagName(t)[0];
+  g.async = g.src = '//www.google-analytics.com/ga.js';
+  s.parentNode.insertBefore(g, s);
+}(document, 'script'));
 </script> 
 </body> 
 </html>
