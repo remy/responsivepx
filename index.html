@@ -265,7 +265,7 @@ if (history.pushState) {
     if (settings.length == 2) {
       useoffset = true;
       $('#scrollbars').attr('checked', 'checked');
-    } else {
+    } else if (location.hash) {
       useoffset = false;
       $('#scrollbars').removeAttr('checked');
     }
