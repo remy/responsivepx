@@ -4,6 +4,7 @@
 <meta charset=utf-8 /> 
 <title>responsivepx - find that tricky breakpoint</title> 
 <!-- Feel free to fork on github too: https://github.com/remy/responsivepx -->
+<link rel="shortcut icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAwAAAANCAYAAACdKY9CAAAAGXRFWHRTb2Z0d2FyZQBBZG9iZSBJbWFnZVJlYWR5ccllPAAAAZpJREFUeNqUUb9LQmEUfb+fPn8gDpFogRCIgoSgS0MgbQ1CEQ3tRQRhQtDa2lTRWHMtRUu0Zf+A4BKCk0RDBJqiPsWnvtc5ouDaB4d73rnnu/e79ym5XO670+m84+yl0+mgqqqbw+HwUcAB3wF/LZVKv9ls9t7n82WlYDC4GAqFdjOZzJosyxuRSOQO3lWCnBpz9NArVSqVc0mS5HA4XNR1/dDlcumO4ywR5NSYo4deka1TqdRxNBq9higCQrVa3aIei8WebdsWAKdWq+XL5fKNkkwmTwzDKPR6PQfVJgVGo5HCOBgMhGl04DmFV1ZwO+52u5cpAvZ4PLYty/qisdlsjjCDBCrS02q14sJ/j4JNrGN9+3NaDx3OSDRNu0AwZgms+FYRRTHv9Xq356vU6/UXRugH8zqeZCgY9qjf7795PJ5LdNKmlVRG6LPKlmmaBaz6SWo0Gj/oUsDwWrfbNbkZbGkCcmrM0UOvFAgEPvGx0m63i6hyNb0wJsipMUcPvYLf77fwnA+2xp9NYN8PiAvElCeYo4fePwEGAFJa2ZbVKf+5AAAAAElFTkSuQmCC"> 
 <style> 
   body { font-family: sans-serif; background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAnCAYAAACMo1E1AAAAcUlEQVRYCe3TsQ0AIQzFUGCD7L9jMgIwAJUVOlMiGZ2e/s3M3KPxRETba6vtpQ8P+XEUVTnlqADt3JxyVIB2bk45KkA7N6ccFaDd3PfQ+NVV1esa3flDILYbKaccFaCdm1OOCtDOzSlHBWjn5pSjArQ7Dl0LEgUi4pIAAAAASUVORK5CYII=); margin: 0; padding: 0; }
   input { font-size: 16px; padding: 2px; font-family: sans-serif; }
@@ -34,7 +35,7 @@
 </head> 
 <body> 
   <form> 
-    <input placeholder=http:// value=http:// id=url name=url autocomplete autofocus> <input type=submit value=Open> 
+    <input placeholder=http:// value=http:// id=url name=url autocomplete autofocus spellcheck=false autocapitalize=off autocorrect=off> <input type=submit value=Open> 
     <span title="Because I can't determine programatically whether the scrollbars are visible, you need to check this box yourself to adjust the pixel value to give the real viewport width - rather than the window width">Scrollbar visible? <input type=checkbox id=scrollbars checked></span>
     Width: <select id=width step=1 type=range>
       <option>10</option>
@@ -135,7 +136,7 @@ if (bool) {
     }
   }
 
- var selects = document.getElementsByTagName('select'),
+  var selects = document.getElementsByTagName('select'),
      i = 0;
 
   for (; i < selects.length; i++) {
@@ -166,6 +167,7 @@ if (bool) {
 }
 }();
 </script>
+
 <script>
 // workout what the dimensions of a scrollbar is for the particular browser. 
 // It's usually 15px, but who sersiously trusts browsers nowadays?!
@@ -176,7 +178,7 @@ function calcScrollbarWidth() {
   return offset;
 }
 
-function newframe(url, scroll) {
+function newframe(url) {
   $('iframe').remove();
   $('<iframe frameborder=0 class="viewport" src="' + url + '"></iframe>').css('display', 'none').appendTo('body').one('load', function () {
     // this is just to prevent the initial iframe from appearing empty (as it has a shadow)
@@ -184,17 +186,24 @@ function newframe(url, scroll) {
   });
 }
 
+function addhistory() {
+  if (history.pushState && url) {
+    clearTimeout(historyTimer);
+    historyTimer = setTimeout(function () {
+      history.pushState(null, null, '?' + encodeURIComponent(url) + '#' + $w.val() + 'x' + $h.val() + (useoffset ? '&scrollbars' : ''));
+    }, 500);
+  }
+}
+
 function size(w, h) {
   // ensure the values are numbers
   w *= 1;
   h *= 1;
   
+  addhistory();
+   
   // adjust for whether we have the scrollbars visible
-  if (useoffset) {
-    w += offset;
-    h += offset;
-  }
-  $('iframe').width(w).height(h);
+  $('iframe').width(w + (useoffset ? offset : 0)).height(h + (useoffset ? offset : 0));
 }
 
 var win = $('iframe'),
@@ -204,17 +213,21 @@ var win = $('iframe'),
     useoffset = $('#scrollbars').is(':checked'),
     $url = $('#url'),
     $hide = $('#hide'),
-    $range = $('[type=range]'); // done on purpose
+    $form = $('form'),
+    $range = $('[type=range]'), // done on purpose
+    historyTimer = null,
+    url = '';
 
-$('form').submit(function (e) {
+$form.submit(function (e) {
   e.preventDefault();
   $('#info').remove();
   
-  var url = $url.val();
+  // allows me to keep things nice and friendly on the url
+  var newurl = url = $url.val();
   
-  if (url.indexOf('http') !== 0) url = 'http://' + url;
+  if (newurl.indexOf('http') !== 0) newurl = 'http://' + newurl;
   
-  newframe(url, $hide.is(':checked') ? false : true);
+  newframe(newurl);
   $range.trigger('change'); // I realise this triggers the size function twice - I'm just lazy :)
 });
 
@@ -222,7 +235,7 @@ $('#scrollbars').click(function () {
   useoffset = this.checked;
   var w = $('iframe').width() - (useoffset ? offset : 0),
       h = $('iframe').height() - (useoffset ? offset : 0);
-  
+  addhistory();
   $('input[type=number], [type=range]').each(function () {
     if (this.id == 'width' || this.className == 'width') {
       this.value = w;
@@ -243,6 +256,33 @@ $range.bind('change', function () {
 }).bind('click', function () {
   $(this).focus();
 });
+
+if (history.pushState) {
+  window.onpopstate = function () {
+    // read the location and reload
+    var settings = location.hash.substr(1).split('&');
+    
+    if (settings.length == 2) {
+      useoffset = true;
+      $('#scrollbars').attr('checked', 'checked');
+    } else if (settings[0].indexOf('x') !== -1) { // if it actually has some value
+      $('#scrollbars').removeAttr('checked');
+      useoffset = false;
+      var wh = settings[0].split('x');
+      $w.val(wh[0]);
+      $h.val(wh[1]);
+    }
+    
+    var newurl = decodeURIComponent(location.search.substr(1));
+    if (newurl !== url) {
+      $url.val(newurl);
+      $form.submit();
+    } else {
+      $range.trigger('change');
+    }
+  };
+}
+
 
 var _gaq = _gaq || [];
 _gaq.push(['_setAccount', 'UA-1656750-27']);
