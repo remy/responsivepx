@@ -195,12 +195,12 @@ function addhistory() {
   }
 }
 
-function size(w, h) {
+function size(w, h, nohistory) {
   // ensure the values are numbers
   w *= 1;
   h *= 1;
   
-  addhistory();
+  if (!nohistory) addhistory();
    
   // adjust for whether we have the scrollbars visible
   $('iframe').width(w + (useoffset ? offset : 0)).height(h + (useoffset ? offset : 0));
@@ -218,7 +218,7 @@ var win = $('iframe'),
     historyTimer = null,
     url = '';
 
-$form.submit(function (e) {
+$form.submit(function (e, nohistory) {
   e.preventDefault();
   $('#info').remove();
   
@@ -228,7 +228,7 @@ $form.submit(function (e) {
   if (newurl.indexOf('http') !== 0) newurl = 'http://' + newurl;
   
   newframe(newurl);
-  $range.trigger('change'); // I realise this triggers the size function twice - I'm just lazy :)
+  $range.trigger('change', nohistory); // I realise this triggers the size function twice - I'm just lazy :)
 });
 
 $('#scrollbars').click(function () {
@@ -245,14 +245,14 @@ $('#scrollbars').click(function () {
   });
 });
 
-$('input[type=number]').bind('input', function () {
+$('input[type=number]').bind('input', function (e, nohistory) {
   $('#' + this.className).val(this.value);
-  size($w.val(), $h.val());
+  size($w.val(), $h.val(), nohistory);
 });
 
-$range.bind('change', function () {
+$range.bind('change', function (e, nohistory) {
   $('.' + this.id).val(this.value);
-  size($w.val(), $h.val());
+  size($w.val(), $h.val(), nohistory);
 }).bind('click', function () {
   $(this).focus();
 });
@@ -265,20 +265,25 @@ if (history.pushState) {
     if (settings.length == 2) {
       useoffset = true;
       $('#scrollbars').attr('checked', 'checked');
-    } else if (settings[0].indexOf('x') !== -1) { // if it actually has some value
-      $('#scrollbars').removeAttr('checked');
+    } else {
       useoffset = false;
+      $('#scrollbars').removeAttr('checked');
+    }
+    
+    if (settings[0].indexOf('x') !== -1) { // if it actually has some value
       var wh = settings[0].split('x');
       $w.val(wh[0]);
       $h.val(wh[1]);
     }
     
+    $('input.width').val($w.val());
+    $('input.height').val($h.val());
     var newurl = decodeURIComponent(location.search.substr(1));
     if (newurl !== url) {
       $url.val(newurl);
-      $form.submit();
+      $form.trigger('submit', [ true ]); // tell the form not to add to the history
     } else {
-      $range.trigger('change');
+      $range.trigger('change', [ true ]);
     }
   };
 }
