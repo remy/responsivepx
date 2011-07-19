@@ -9,7 +9,7 @@
   body { font-family: sans-serif; background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAnCAYAAACMo1E1AAAAcUlEQVRYCe3TsQ0AIQzFUGCD7L9jMgIwAJUVOlMiGZ2e/s3M3KPxRETba6vtpQ8P+XEUVTnlqADt3JxyVIB2bk45KkA7N6ccFaDd3PfQ+NVV1esa3flDILYbKaccFaCdm1OOCtDOzSlHBWjn5pSjArQ7Dl0LEgUi4pIAAAAASUVORK5CYII=); margin: 0; padding: 0; }
   input { font-size: 16px; padding: 2px; font-family: sans-serif; }
   input[type=range] {  width: 100px; height: 7px; }
-  iframe.viewport { position: width: 100%; margin: 34px auto 0 auto; display: block; height: 2000px; -webkit-box-shadow: 0 5px 80px #505050; }
+  iframe.viewport { background: #fff; position: width: 100%; margin: 34px auto 0 auto; display: block; height: 2000px; -webkit-box-shadow: 0 5px 80px #505050; }
   form { height: 30px; overflow: hidden; display: block; background: #333; background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#666666), to(#666666), color-stop(.6,#333)); color: #fff; width: 100%; padding: 2px; position: fixed; top: 0; left: 0; border-bottom: 1px solid rgba(0, 0, 0, .15); }
   form {
     text-shadow: 0 -1px 1px #000;
@@ -18,7 +18,11 @@
   #info {
     width: 50%;
     margin: 15% auto 0;
+    box-shadow: 0 5px 80px #505050;
     -webkit-box-shadow: 0 5px 80px #505050;
+    -moz-box-shadow: 0 5px 80px #505050;
+    -o-box-shadow: 0 5px 80px #505050;
+    -ms-box-shadow: 0 5px 80px #505050;
     background: #fff;
     padding: 40px;
     line-height: 1.4em;
@@ -31,11 +35,33 @@
   #info p:last-child {
     margin-bottom: 0;
   }
+  
+  #share {
+    text-decoration: none;
+    color: #fff;
+    border: 2px solid transparent;
+    padding: 2px 4px;
+  }
+  
+  #share:hover {
+    text-decoration: none;
+    color: #fff;
+    border: 2px inset rgba(0, 0, 0, .15);
+    background: rgba(0, 0, 0, 0.1);
+    border-radius: 3px;
+  }
+  
+  #share:active {
+    background: rgba(0, 0, 0, 0.4);
+    color: #ddd;
+  }
+  
 </style> 
 </head> 
 <body> 
   <form> 
-    <input placeholder=http:// value=http:// id=url name=url autocomplete autofocus spellcheck=false autocapitalize=off autocorrect=off> <input type=submit value=Open> 
+    <input placeholder=http:// value=http:// id=url name=url autocomplete autofocus spellcheck=false autocapitalize=off autocorrect=off>
+    <input type=submit value=Open> 
     <span title="Because I can't determine programatically whether the scrollbars are visible, you need to check this box yourself to adjust the pixel value to give the real viewport width - rather than the window width">Scrollbar visible? <input type=checkbox id=scrollbars checked></span>
     Width: <select id=width step=1 type=range>
       <option>10</option>
@@ -67,6 +93,8 @@
       </select>
     <!-- <input type=range step=1 id='height' step=10 min=100 max=3000 value=640> -->
     <input size=4 type=number min=10 step=1 class=height>
+    <a title='Open a new email with the permalink to this breakpoint' href='mailto:?subject=responsivepx.com' id=share>Share</a>
+    
   </form> 
   <div id="info">
     <h1>About responsivepx</h1>
@@ -227,8 +255,21 @@ $form.submit(function (e, nohistory) {
   
   if (newurl.indexOf('http') !== 0) newurl = 'http://' + newurl;
   
+  if (url.indexOf('http://') === 0) url = url.substr(7); // strip the http:// part - don'ts needs'it
+  
   newframe(newurl);
   $range.trigger('change', nohistory); // I realise this triggers the size function twice - I'm just lazy :)
+});
+
+$('#share').click(function () {
+  var copy = '';
+  if (!url) {
+    copy = 'Check out this tool for finding breakpoints in responsive designs:\n\nhttp://' + location.host;
+  } else {
+    copy = 'See these breakpoints in ' + url + ':\n\nhttp://' + location;
+  }
+  
+  this.href = 'mailto:?body=' + encodeURIComponent(copy);
 });
 
 $('#scrollbars').click(function () {
