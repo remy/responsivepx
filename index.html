@@ -263,6 +263,8 @@ $range.bind('change', function (e, nohistory) {
   $(this).focus();
 });
 
+if (window.top !== window.self) window.top.location.replace(window.self.location.href);
+
 if (history.pushState) {
   window.onpopstate = function () {
     // read the location and reload
