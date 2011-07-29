@@ -253,7 +253,7 @@ $form.submit(function (e, nohistory) {
   // allows me to keep things nice and friendly on the url
   var newurl = url = $url.val();
   
-  if (newurl.indexOf('http') !== 0) newurl = 'http://' + newurl;
+  if (newurl.indexOf('://') === -1) newurl = 'http://' + newurl;
   
   if (url.indexOf('http://') === 0) url = url.substr(7); // strip the http:// part - don'ts needs'it
   
