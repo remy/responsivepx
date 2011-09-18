@@ -55,7 +55,14 @@
     background: rgba(0, 0, 0, 0.4);
     color: #ddd;
   }
-  
+
+  #presets {
+    min-width: 100px;
+  }
+
+  button {
+    min-width: 25px;
+  }
 </style> 
 </head> 
 <body> 
@@ -93,6 +100,15 @@
       </select>
     <!-- <input type=range step=1 id='height' step=10 min=100 max=3000 value=640> -->
     <input size=4 type=number min=10 step=1 class=height>
+
+    <button id="presets-add" title="Create a preset from the current values">+</button>
+
+    <button id="presets-prev" title="Previous preset (try Ctrl+LeftArrow)" disabled>&lt;</button>
+    <select id="presets" disabled></select>
+    <button id="presets-next" title="Next preset (try Ctrl+RightArrow)" disabled>&gt;</button>
+
+    <button id="presets-remove" title="Remove the chosen preset" disabled>-</button>
+
     <a title='Open a new email with the permalink to this breakpoint' href='mailto:?subject=responsivepx.com' id=share>Share</a>
     
   </form> 
@@ -103,6 +119,11 @@
     <p>If your site appears with scrollbars, make sure to check the scrollbar visible box to get the right viewport width and height.</p>
     <p>Fork the project or log an issue on <a href="http://github.com/remy/responsivepx">github</a></p>
     <p>Built by <a href="http://twitter.com/rem">@rem</a></p>
+
+    <h3>Support for preset values</h3>
+    <p>Added by <a href="http://twitter.com/harriha">@harriha</a> (<a href="https://github.com/harriha/responsivepx">fork on GitHub</a>)</p>
+    <p>You can add desired width+height pairs to the preset list for quick access. Values are stored to localStorage (works fine in modern browsers). Use Ctrl+[LeftArrow|RightArrow] to switch between the presets.</p>
+    <p>Note: Due to a <a href="https://bugzilla.mozilla.org/show_bug.cgi?id=507361">bug</a> in Firefox, localStorage doesn't work if the file is opened locally (<i>file:///...</i>).</p>
   </div>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script> 
 <script>
@@ -235,6 +256,103 @@ function size(w, h, nohistory) {
   $('iframe').width(w + (useoffset ? offset : 0)).height(h + (useoffset ? offset : 0));
 }
 
+// Going bit OOP with the presets
+function Preset(w, h) {
+  var self = {
+    width: w || 0,
+    height: h || 0,
+    val: function() { return self.width + "x" + self.height; },
+    compare: function(preset) { return self.width - preset.width; },
+    equals: function(preset) { return self.val() === preset.val(); }
+  }
+
+  return self;
+}
+
+function addPreset(width, height) {
+  var preset = new Preset(width, height);
+
+  // We don't want to have the same preset twice
+  var i = presets.length;
+  while(i--) {
+    if(presets[i].equals(preset)) return;
+  }
+
+  // Add to the end, the order is handled later on
+  presets.push(preset);
+
+  var opt = document.createElement("option");
+  opt.value = preset.val();
+  opt.innerHTML = preset.val() + "px";
+  opt.selected = true;
+
+  if(presets.length > 1) {
+    // Sort presets, find the correct index for the new item and add it to the list
+
+    presets = presets.sort(function(a, b) { return a.width - b.width; });
+
+    i = presets.length;
+    while(--i && presets[i].compare(preset) > 0);
+
+    !i ? $("#presets").prepend(opt) : $(opt).insertAfter($("#presets").children()[i - 1]);
+  }
+  else {
+    $("#presets").append(opt);
+  }
+
+  storePresets();
+  updatePresetControls();
+}
+
+function storePresets() {
+  if(hasLocalStorage()) {
+    localStorage.setItem("presets", JSON.stringify(presets));
+  }
+}
+
+// The approach used in Modernizr
+function hasLocalStorage() {
+  try {
+    return !!localStorage.getItem;
+  } catch(e) {
+    return false;
+  }
+};
+
+function updatePresetControls() {
+  if(presets.length == 1) {
+    $.each(["#presets", "#presets-remove"], function(i, val) {
+      $(val).attr("disabled", false);
+    })
+    $.each(["#presets-prev", "#presets-next"], function(i, val) {
+      $(val).attr("disabled", true);
+    })
+  }
+  else if(presets.length > 1) {
+    $.each(["#presets", "#presets-remove", "#presets-prev", "#presets-next"], function(i, val) {
+      $(val).attr("disabled", false);
+    })
+  }
+  else {
+    $.each(["#presets", "#presets-remove", "#presets-prev", "#presets-next"], function(i, val) {
+      $(val).attr("disabled", true);
+    })
+  }
+}
+
+function refresh(width, height, nohistory) {
+  if(width) {
+    $('#width').val(width);
+    $('.width').val(width);
+  }
+  if(height) {
+    $('#height').val(height);
+    $('.height').val(height);
+  }
+
+  size($w.val(), $h.val(), nohistory);
+}
+
 var win = $('iframe'),
     $w = $('#width'),
     $h = $('#height'),
@@ -245,7 +363,67 @@ var win = $('iframe'),
     $form = $('form'),
     $range = $('[type=range]'), // done on purpose
     historyTimer = null,
-    url = '';
+    url = '',
+    presets = [];
+
+$("#presets").bind("change", function(e, nohistory) {
+  refresh(this.value.split("x")[0], this.value.split("x")[1], nohistory);
+});
+
+$("#presets-add").click(function(e) {
+  e.preventDefault();
+
+  addPreset($w.val(), $h.val());
+});
+
+$("#presets-remove").click(function(e) {
+  e.preventDefault();
+
+  var current = $("#presets option:selected");
+
+  if(current.length) {
+    presets.splice(current.index(), 1);
+    current.remove();
+
+    storePresets();
+    $("#presets").trigger("change", [ true ]); // Retain history
+
+    updatePresetControls();
+  }
+});
+
+$("#presets-prev").click(function(e) {
+  e.preventDefault();
+
+  var current = $("#presets option:selected");
+  if(current.prev().length) {
+    $("#presets").val(current.prev().val()).trigger("change");
+  }
+});
+
+$("#presets-next").click(function(e) {
+  e.preventDefault();
+
+  var current = $("#presets option:selected");
+  if(current.next().length) {
+    $("#presets").val(current.next().val()).trigger("change");
+  }
+});
+
+/*
+ * Navigating between the presets using keyboard: Ctrl+LeftArrow
+ * selects the previous preset, Ctrl+RightArrow the next one.
+ */
+$(document).keydown(function(e) {
+  if(e.ctrlKey) {
+    if(e.which == '37') { // Left arrow
+      $("#presets-prev").click();
+    }
+    else if(e.which == '39') { // Right arrow
+      $("#presets-next").click();
+    }
+  }
+});
 
 $form.submit(function (e, nohistory) {
   e.preventDefault();
@@ -288,8 +466,8 @@ $('#scrollbars').click(function () {
 });
 
 $('input[type=number]').bind('input', function (e, nohistory) {
-  $('#' + this.className).val(this.value);
-  size($w.val(), $h.val(), nohistory);
+  if(this.className == "width") refresh(this.value, undefined, nohistory);
+  else refresh(undefined, this.value, nohistory);
 }).bind('keydown', function (e) {
   if (e.shiftKey) {
     this.step = 10;
@@ -299,13 +477,23 @@ $('input[type=number]').bind('input', function (e, nohistory) {
 });
 
 $range.bind('change', function (e, nohistory) {
-  $('.' + this.id).val(this.value);
-  size($w.val(), $h.val(), nohistory);
+  if(this.id == "width") refresh(this.value, undefined, nohistory);
+  else refresh(undefined, this.value, nohistory);
 }).bind('click', function () {
   $(this).focus();
 });
 
 if (window.top !== window.self) window.top.location.replace(window.self.location.href);
+
+// Load presets from localStorage
+if(hasLocalStorage()) {
+  var arr = JSON.parse(localStorage.getItem("presets")) || [];
+  for(var i = 0; i < arr.length; i++) {
+    addPreset(arr[i].width, arr[i].height);
+  }
+
+  updatePresetControls();
+}
 
 if (history.pushState) {
   window.onpopstate = function () {
@@ -324,6 +512,9 @@ if (history.pushState) {
       var wh = settings[0].split('x');
       $w.val(wh[0]);
       $h.val(wh[1]);
+
+      // Try to set the presets select to reflect the current state
+      $("#presets").val(wh[0] + "x" + wh[1]);
     }
     
     $('input.width').val($w.val());
