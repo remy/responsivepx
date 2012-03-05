@@ -8,6 +8,7 @@
 <style> 
   body { font-family: sans-serif; background: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACcAAAAnCAYAAACMo1E1AAAAcUlEQVRYCe3TsQ0AIQzFUGCD7L9jMgIwAJUVOlMiGZ2e/s3M3KPxRETba6vtpQ8P+XEUVTnlqADt3JxyVIB2bk45KkA7N6ccFaDd3PfQ+NVV1esa3flDILYbKaccFaCdm1OOCtDOzSlHBWjn5pSjArQ7Dl0LEgUi4pIAAAAASUVORK5CYII=); margin: 0; padding: 0; }
   input { font-size: 16px; padding: 2px; font-family: sans-serif; }
+  input[type=number] { width: 60px; }
   input[type=range] {  width: 100px; height: 7px; }
   iframe.viewport { background: #fff; position: width: 100%; margin: 34px auto 0 auto; display: block; height: 2000px; -webkit-box-shadow: 0 5px 80px #505050; }
   form { height: 30px; overflow: hidden; display: block; background: #333; background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#666666), to(#666666), color-stop(.6,#333)); color: #fff; width: 100%; padding: 2px; position: fixed; top: 0; left: 0; border-bottom: 1px solid rgba(0, 0, 0, .15); }
@@ -104,7 +105,7 @@
     <p>Fork the project or log an issue on <a href="http://github.com/remy/responsivepx">github</a></p>
     <p>Built by <a href="http://twitter.com/rem">@rem</a></p>
   </div>
-<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.6.2/jquery.min.js"></script> 
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js"></script> 
 <script>
 /**
  * This was from a proposal that James Edwards / Brothercake had during
@@ -172,7 +173,7 @@ if (bool) {
     if (selects[i].getAttribute('type') == 'range') (function (select) {
       var range = document.createElement('input'),
           parent = select.parentNode;
-          
+ 
       range.setAttribute('type', 'range');
       // works with the select element removed from the DOM
       select = parent.replaceChild(range, select);
